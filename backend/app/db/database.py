@@ -2,7 +2,6 @@ from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 from dotenv import load_dotenv
 from app.db.base import Base
-from app.models.user import User
 import os
 
 load_dotenv()
@@ -16,9 +15,10 @@ SessionLocal = sessionmaker(
     autoflush=False,
     bind=engine
 )
+
 def get_db():
     db = SessionLocal()
     try:
         yield db
     finally:
-        db.close()   
+        db.close()
