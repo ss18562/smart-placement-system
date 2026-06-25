@@ -7,6 +7,16 @@ from app.models.user import User
 from app.schemas.resume import ResumeResponse
 from app.core.dependencies import get_current_user
 from app.services.ats import analyze_resume
+from app.services.resume_analyzer import (
+    extract_skills,
+    extract_links,
+    calculate_completeness,
+    extract_projects,
+    extract_email,
+    extract_phone
+)
+from app.schemas.jd import JDRequest
+from app.services.jd_matcher import match_resume_to_jd
 import os
 import shutil
 
@@ -146,4 +156,57 @@ def get_ats_score(
     result = analyze_resume(text)
 
     return result    
+@router.get("/resume/analysis")
+def analyze_resume_endpoint(
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    resume = db.query(Resume).filter(
+        Resume.user_id == current_user.id
+    ).first()
+
+    if not resume:
+        raise HTTPException(
+            status_code=404,
+            detail="Resume not found"
+        )
+
+    text = extract_text_from_pdf(
+        resume.file_path
+    )
+
+    return {
+        "email": extract_email(text),
+        "phone": extract_phone(text),
+        "skills": extract_skills(text),
+        "projects": extract_projects(text),
+        "links": extract_links(text),
+        "completeness_score": calculate_completeness(text)
+    }
    
+@router.post("/resume/match")
+def match_resume(
+    jd_data: JDRequest,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    resume = db.query(Resume).filter(
+        Resume.user_id == current_user.id
+    ).first()
+
+    if not resume:
+        raise HTTPException(
+            status_code=404,
+            detail="Resume not found"
+        )
+
+    resume_text = extract_text_from_pdf(
+        resume.file_path
+    )
+
+    result = match_resume_to_jd(
+        resume_text,
+        jd_data.job_description
+    )
+
+    return result 
