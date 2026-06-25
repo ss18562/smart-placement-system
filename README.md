@@ -1,4 +1,4 @@
-# Smart Placement Preparation System (SPPS)
+# Smart Placement Preparation System (SPPS) ----- ONGOING
 
 ## 🚀 AI-Powered Placement Readiness Platform
 
